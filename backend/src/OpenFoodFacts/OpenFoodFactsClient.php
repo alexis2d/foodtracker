@@ -8,13 +8,18 @@ use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Thin client over the public Open Food Facts v2 API. Degrades gracefully:
- * any transport/parsing failure results in an empty/null result rather than
- * propagating, so a slow or unreachable OFF never breaks local search.
+ * Thin client over Open Food Facts. Product-by-barcode lookups use the
+ * official REST API v3; keyword search uses Search-a-licious
+ * (search.openfoodfacts.org), the recommended full-text search service —
+ * the v2/v3 product API does not implement free-text search on its own.
+ * Degrades gracefully: any transport/parsing failure results in an
+ * empty/null result rather than propagating, so a slow or unreachable OFF
+ * never breaks local search.
  */
 final class OpenFoodFactsClient
 {
-    private const BASE_URL = 'https://world.openfoodfacts.org';
+    private const PRODUCT_BASE_URL = 'https://world.openfoodfacts.org';
+    private const SEARCH_BASE_URL = 'https://search.openfoodfacts.org';
     private const FIELDS = 'code,product_name,nutriments,quantity';
     private const TIMEOUT = 3.0;
     private const SEARCH_CACHE_TTL = 60;
@@ -55,14 +60,14 @@ final class OpenFoodFactsClient
     public function getByBarcode(string $barcode): ?array
     {
         try {
-            $response = $this->httpClient->request('GET', self::BASE_URL.'/api/v2/product/'.rawurlencode($barcode), [
+            $response = $this->httpClient->request('GET', self::PRODUCT_BASE_URL.'/api/v3/product/'.rawurlencode($barcode), [
                 'query' => ['fields' => self::FIELDS],
                 'timeout' => self::TIMEOUT,
                 'headers' => ['User-Agent' => self::USER_AGENT],
             ]);
             $data = $response->toArray();
 
-            if (1 !== ($data['status'] ?? 0) || !isset($data['product'])) {
+            if ('success' !== ($data['status'] ?? null) || !isset($data['product'])) {
                 return null;
             }
 
@@ -82,11 +87,11 @@ final class OpenFoodFactsClient
      */
     private function fetchSearch(string $query, int $page): array
     {
-        $response = $this->httpClient->request('GET', self::BASE_URL.'/api/v2/search', [
+        $response = $this->httpClient->request('GET', self::SEARCH_BASE_URL.'/search', [
             'query' => [
-                'search_terms' => $query,
-                'page_size' => 20,
+                'q' => $query,
                 'page' => $page,
+                'page_size' => 20,
                 'fields' => self::FIELDS,
             ],
             'timeout' => self::TIMEOUT,
@@ -94,9 +99,9 @@ final class OpenFoodFactsClient
         ]);
 
         $data = $response->toArray();
-        $products = $data['products'] ?? [];
+        $hits = $data['hits'] ?? [];
 
-        $mapped = array_map(fn (array $p) => $this->mapProduct($p), $products);
+        $mapped = array_map(fn (array $p) => $this->mapProduct($p), $hits);
 
         return array_values(array_filter($mapped));
     }

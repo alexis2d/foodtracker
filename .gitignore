@@ -1,0 +1,18 @@
+# Backend (Symfony)
+/backend/vendor/
+/backend/var/
+/backend/config/jwt/*.pem
+/backend/public/bundles/
+
+# Frontend (Vite/React)
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.env.local
+
+# Editors/OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+.claude/
+.env*

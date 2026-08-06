@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: foodtracker
+      POSTGRES_USER: foodtracker
+      POSTGRES_PASSWORD: foodtracker
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U foodtracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  php:
+    build: ./docker/php
+    volumes:
+      - ./backend:/app
+      - backend_vendor:/app/vendor
+    environment:
+      DATABASE_URL: "postgresql://foodtracker:foodtracker@postgres:5432/foodtracker?serverVersion=16&charset=utf8"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "composer install --no-scripts && rm -rf var/cache/* && php -S 0.0.0.0:8000 -t public"
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+
+volumes:
+  pgdata:
+  backend_vendor:
+  frontend_node_modules:

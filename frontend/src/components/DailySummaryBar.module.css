@@ -1,0 +1,61 @@
+.bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.kcalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.kcalValue {
+  font-size: 1.1rem;
+}
+
+.kcalValue strong {
+  font-size: 1.4rem;
+}
+
+.remaining {
+  color: var(--success);
+  font-size: 0.9rem;
+}
+
+.over {
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+.progressTrack {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.progressFillOver {
+  height: 100%;
+  width: 100%;
+  background: var(--danger);
+  border-radius: 999px;
+}
+
+.macros {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}

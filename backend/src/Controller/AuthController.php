@@ -7,11 +7,13 @@ use App\EventSubscriber\JwtCookieSubscriber;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -24,7 +26,13 @@ final class AuthController extends AbstractController
         EntityManagerInterface $em,
         UserPasswordHasherInterface $passwordHasher,
         ValidatorInterface $validator,
+        #[Autowire(service: 'limiter.register_ip')] RateLimiterFactory $registerLimiterFactory,
     ): JsonResponse {
+        $limit = $registerLimiterFactory->create($request->getClientIp())->consume();
+        if (!$limit->isAccepted()) {
+            return $this->json(['error' => 'too many registration attempts, please try again later'], Response::HTTP_TOO_MANY_REQUESTS);
+        }
+
         $payload = json_decode($request->getContent(), true) ?? [];
         $email = trim((string) ($payload['email'] ?? ''));
         $password = (string) ($payload['password'] ?? '');

@@ -24,6 +24,11 @@ security:
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
             jwt: ~
+            # Throttles login attempts per (email, IP) pair, with a global
+            # per-IP fallback, to blunt credential-stuffing/brute-force.
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
 
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used

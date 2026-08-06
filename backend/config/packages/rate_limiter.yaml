@@ -1,0 +1,10 @@
+framework:
+    rate_limiter:
+        # Keyed by IP in AuthController::register(); prevents mass account
+        # creation from a single source. Single-instance deployment, so the
+        # default in-memory/cache storage is fine — switch the `cache_pool`
+        # to a Redis-backed pool if this ever runs behind a load balancer.
+        register_ip:
+            policy: 'sliding_window'
+            limit: 5
+            interval: '1 hour'

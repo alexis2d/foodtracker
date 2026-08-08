@@ -18,3 +18,6 @@ Thumbs.db
 .env*
 
 DEPLOYMENT.md
+
+# Contains real production secrets (.env.local, JWT keys) — never commit
+/backend-prod-build/

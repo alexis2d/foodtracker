@@ -38,7 +38,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: frontend/dist/
-          server-dir: www/
+          server-dir: foodtracker/
 
   deploy-backend:
     runs-on: ubuntu-latest
@@ -66,6 +66,7 @@ jobs:
           JWT_PASSPHRASE=${{ secrets.JWT_PASSPHRASE }}
           JWT_TOKEN_TTL=604800
           CORS_ALLOW_ORIGIN=^https://foodtracker\.alexis2d\.fr$
+          DEPLOY_TOKEN=${{ secrets.DEPLOY_TOKEN }}
           EOF
 
       - name: Write JWT keypair
@@ -78,10 +79,6 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: composer install --no-dev --optimize-autoloader --classmap-authoritative --no-interaction
-
-      - name: Run database migrations
-        working-directory: backend
-        run: php bin/console doctrine:migrations:migrate --no-interaction
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -96,3 +93,20 @@ jobs:
             **/.git*/**
             **/var/**
             **/tests/**
+
+      # The OVH shared MySQL database is only reachable from inside OVH's own
+      # network, so this runner can't connect to it directly (see
+      # DeployController). Instead, hit the just-deployed app over HTTPS and
+      # let it run the migration itself. Runs after the FTP upload so the new
+      # migration files are actually on the server first.
+      - name: Trigger remote migration
+        run: |
+          response=$(curl -sS -w "\n%{http_code}" -X POST https://api.foodtracker.alexis2d.fr/api/internal/migrate \
+            -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}")
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          echo "$body"
+          if [ "$http_code" != "200" ]; then
+            echo "Migration endpoint returned HTTP $http_code"
+            exit 1
+          fi

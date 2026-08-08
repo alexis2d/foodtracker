@@ -35,6 +35,10 @@ security:
     access_control:
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        # Guarded by its own DEPLOY_TOKEN check in the controller, not by
+        # Symfony's user auth — this is a machine-to-machine deploy hook,
+        # triggered by CI, that has no concept of a logged-in user.
+        - { path: ^/api/internal, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:

@@ -45,6 +45,26 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          # Need the previous commit locally to diff composer.lock below.
+          fetch-depth: 0
+
+      # vendor/ is ~4500 files and is by far the slowest part of the FTP
+      # upload (tens of minutes on OVH's shared-hosting FTP), but composer
+      # output is fully deterministic for a given composer.lock — re-uploading
+      # it when no dependency changed is pure waste. Skip that whole step
+      # unless this push actually touched composer.lock.
+      - name: Check whether composer.lock changed
+        id: deps
+        run: |
+          base="${{ github.event.before }}"
+          if [ -z "$base" ] || ! git cat-file -e "$base" 2>/dev/null; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "$base" "${{ github.sha }}" -- backend/composer.lock | grep -q .; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -80,7 +100,20 @@ jobs:
         working-directory: backend
         run: composer install --no-dev --optimize-autoloader --classmap-authoritative --no-interaction
 
-      - name: Deploy via FTP
+      # Own FTP target + own state file, so it's tracked independently from
+      # the app-code deploy below and only ever runs when composer.lock
+      # actually changed (see the "Check whether composer.lock changed" step).
+      - name: Deploy vendor/ via FTP
+        if: steps.deps.outputs.changed == 'true'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: backend/vendor/
+          server-dir: foodtracker-api/vendor/
+
+      - name: Deploy app code via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_HOST }}
@@ -93,6 +126,7 @@ jobs:
             **/.git*/**
             **/var/**
             **/tests/**
+            **/vendor/**
 
       # FTP upload only touches source files (var/ is excluded above), so the
       # compiled container + router cache from the previous deploy is still

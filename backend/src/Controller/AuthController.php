@@ -89,6 +89,11 @@ final class AuthController extends AbstractController
             'id' => $user->getId(),
             'email' => $user->getEmail(),
             'dailyCalorieGoal' => $user->getDailyCalorieGoal(),
+            'heightCm' => $user->getHeightCm(),
+            'weightKg' => $user->getWeightKg(),
+            'age' => $user->getAge(),
+            'sex' => $user->getSex()?->value,
+            'activityLevel' => $user->getActivityLevel()?->value,
         ]);
     }
 

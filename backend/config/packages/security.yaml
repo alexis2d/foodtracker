@@ -23,7 +23,8 @@ security:
                 password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
-            jwt: ~
+            jwt:
+                authenticator: App\Security\PublicRouteJwtAuthenticator
             # Throttles login attempts per (email, IP) pair, with a global
             # per-IP fallback, to blunt credential-stuffing/brute-force.
             login_throttling:

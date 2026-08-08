@@ -48,8 +48,35 @@ export interface DailySummary {
   entriesByMeal: Record<MealType, DiaryEntry[]>;
 }
 
+export type Sex = 'male' | 'female';
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+
+export const ACTIVITY_LEVELS: ActivityLevel[] = ['sedentary', 'light', 'moderate', 'active', 'very_active'];
+
+export const ACTIVITY_LEVEL_LABELS: Record<ActivityLevel, string> = {
+  sedentary: 'Sédentaire (peu ou pas d\'exercice)',
+  light: 'Légère (1 à 3 jours/semaine)',
+  moderate: 'Modérée (3 à 5 jours/semaine)',
+  active: 'Intense (6 à 7 jours/semaine)',
+  very_active: 'Très intense (sport quotidien + travail physique)',
+};
+
+export interface Profile {
+  dailyCalorieGoal: number;
+  heightCm: number | null;
+  weightKg: number | null;
+  age: number | null;
+  sex: Sex | null;
+  activityLevel: ActivityLevel | null;
+}
+
 export interface CurrentUser {
   id: number;
   email: string;
   dailyCalorieGoal: number;
+  heightCm: number | null;
+  weightKg: number | null;
+  age: number | null;
+  sex: Sex | null;
+  activityLevel: ActivityLevel | null;
 }

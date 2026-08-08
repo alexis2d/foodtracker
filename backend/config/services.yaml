@@ -26,3 +26,11 @@ services:
         arguments:
             $environment: '%kernel.environment%'
             $tokenTtl: '%env(int:JWT_TOKEN_TTL)%'
+
+    # Reuses the lexik abstract authenticator template (jwt_manager, event
+    # dispatcher, token extractor, translator) so the "jwt:" firewall config
+    # can point at this class instead of the default one. See
+    # src/Security/PublicRouteJwtAuthenticator.php for why this exists.
+    App\Security\PublicRouteJwtAuthenticator:
+        parent: lexik_jwt_authentication.security.jwt_authenticator
+        abstract: true

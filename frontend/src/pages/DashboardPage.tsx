@@ -44,6 +44,9 @@ export function DashboardPage() {
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
+          <Link className={styles.logoutBtn} to="/profile">
+            Profil
+          </Link>
           <button className={styles.logoutBtn} onClick={() => logout()}>
             Déconnexion
           </button>

@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use App\Entity\Enum\ActivityLevel;
+use App\Entity\Enum\Sex;
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -34,6 +36,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column]
     private int $dailyCalorieGoal = 2000;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $heightCm = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?float $weightKg = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $age = null;
+
+    #[ORM\Column(enumType: Sex::class, nullable: true)]
+    private ?Sex $sex = null;
+
+    #[ORM\Column(enumType: ActivityLevel::class, nullable: true)]
+    private ?ActivityLevel $activityLevel = null;
 
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
@@ -128,5 +145,65 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getHeightCm(): ?int
+    {
+        return $this->heightCm;
+    }
+
+    public function setHeightCm(?int $heightCm): static
+    {
+        $this->heightCm = $heightCm;
+
+        return $this;
+    }
+
+    public function getWeightKg(): ?float
+    {
+        return $this->weightKg;
+    }
+
+    public function setWeightKg(?float $weightKg): static
+    {
+        $this->weightKg = $weightKg;
+
+        return $this;
+    }
+
+    public function getAge(): ?int
+    {
+        return $this->age;
+    }
+
+    public function setAge(?int $age): static
+    {
+        $this->age = $age;
+
+        return $this;
+    }
+
+    public function getSex(): ?Sex
+    {
+        return $this->sex;
+    }
+
+    public function setSex(?Sex $sex): static
+    {
+        $this->sex = $sex;
+
+        return $this;
+    }
+
+    public function getActivityLevel(): ?ActivityLevel
+    {
+        return $this->activityLevel;
+    }
+
+    public function setActivityLevel(?ActivityLevel $activityLevel): static
+    {
+        $this->activityLevel = $activityLevel;
+
+        return $this;
     }
 }

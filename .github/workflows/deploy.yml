@@ -94,11 +94,29 @@ jobs:
             **/var/**
             **/tests/**
 
+      # FTP upload only touches source files (var/ is excluded above), so the
+      # compiled container + router cache from the previous deploy is still
+      # what's being served. Rebuild it in its own request before anything
+      # else touches the app, otherwise newly added routes/services 404 even
+      # though the code is already on disk.
+      - name: Clear remote cache
+        run: |
+          response=$(curl -sS -w "\n%{http_code}" -X POST https://api.foodtracker.alexis2d.fr/api/internal/clear-cache \
+            -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}")
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          echo "$body"
+          if [ "$http_code" != "200" ]; then
+            echo "Clear-cache endpoint returned HTTP $http_code"
+            exit 1
+          fi
+
       # The OVH shared MySQL database is only reachable from inside OVH's own
       # network, so this runner can't connect to it directly (see
       # DeployController). Instead, hit the just-deployed app over HTTPS and
-      # let it run the migration itself. Runs after the FTP upload so the new
-      # migration files are actually on the server first.
+      # let it run the migration itself. Runs after the FTP upload (so the
+      # new migration files are actually on the server) and after the cache
+      # clear (its own request, on purpose — see DeployController).
       - name: Trigger remote migration
         run: |
           response=$(curl -sS -w "\n%{http_code}" -X POST https://api.foodtracker.alexis2d.fr/api/internal/migrate \

@@ -5,6 +5,68 @@ import { useAuth } from '../lib/auth';
 import { ACTIVITY_LEVELS, ACTIVITY_LEVEL_LABELS, type ActivityLevel, type Sex } from '../lib/types';
 import styles from './ProfileForm.module.css';
 
+function ChangePasswordCard() {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setMessage(null);
+    setSubmitting(true);
+    try {
+      await api.post('/api/change-password', { currentPassword, newPassword });
+      setMessage('Un email de confirmation vient de vous être envoyé. Le changement prendra effet une fois le lien cliqué.');
+      setCurrentPassword('');
+      setNewPassword('');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Une erreur est survenue');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form className={styles.card} onSubmit={handleSubmit}>
+      <h1 className={styles.title}>Sécurité</h1>
+      <p className={styles.hint}>
+        Le nouveau mot de passe ne sera actif qu'après confirmation via le lien qui vous sera envoyé par email.
+      </p>
+      {error && <div className={styles.error}>{error}</div>}
+      {message && <p className={styles.note}>{message}</p>}
+      <div className={styles.field}>
+        <label htmlFor="currentPassword">Mot de passe actuel</label>
+        <input
+          id="currentPassword"
+          type="password"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          required
+        />
+      </div>
+      <div className={styles.field}>
+        <label htmlFor="newPassword">Nouveau mot de passe</label>
+        <input
+          id="newPassword"
+          type="password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          minLength={8}
+          required
+        />
+      </div>
+      <div className={styles.actions}>
+        <button type="submit" className={styles.primary} disabled={submitting}>
+          {submitting ? 'Envoi…' : 'Changer le mot de passe'}
+        </button>
+      </div>
+    </form>
+  );
+}
+
 export function ProfilePage() {
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
@@ -68,6 +130,7 @@ export function ProfilePage() {
 
   return (
     <div className={styles.wrapper}>
+      <div className={styles.stack}>
       <form className={styles.card} onSubmit={handleSubmit}>
         <h1 className={styles.title}>Mon profil &amp; objectif calorique</h1>
         {error && <div className={styles.error}>{error}</div>}
@@ -176,6 +239,9 @@ export function ProfilePage() {
           </button>
         </div>
       </form>
+
+      <ChangePasswordCard />
+      </div>
     </div>
   );
 }

@@ -17,7 +17,15 @@ use Symfony\Component\HttpFoundation\Request;
  */
 final class PublicRouteJwtAuthenticator extends JWTAuthenticator
 {
-    private const PUBLIC_PATHS = ['/api/register', '/api/login'];
+    private const PUBLIC_PATHS = [
+        '/api/register',
+        '/api/login',
+        '/api/verify-email',
+        '/api/resend-verification',
+        '/api/forgot-password',
+        '/api/reset-password',
+        '/api/confirm-password-change',
+    ];
 
     public function supports(Request $request): ?bool
     {

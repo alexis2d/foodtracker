@@ -87,6 +87,12 @@ jobs:
           JWT_TOKEN_TTL=604800
           CORS_ALLOW_ORIGIN=^https://foodtracker\.alexis2d\.fr$
           DEPLOY_TOKEN=${{ secrets.DEPLOY_TOKEN }}
+          # Falls back to the no-op transport until a MAILER_DSN secret with
+          # real SMTP credentials is added — accounts will still be created,
+          # but activation/reset emails silently won't send until then.
+          MAILER_DSN=${{ secrets.MAILER_DSN || 'null://null' }}
+          MAILER_FROM=no-reply@foodtracker.alexis2d.fr
+          FRONTEND_URL=https://foodtracker.alexis2d.fr
           EOF
 
       - name: Write JWT keypair

@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\EventSubscriber\JwtCookieSubscriber;
+use App\Mail\AuthMailer;
+use App\Security\TokenGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -20,12 +22,16 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[Route('/api')]
 final class AuthController extends AbstractController
 {
+    private const VERIFICATION_TOKEN_TTL = '+24 hours';
+
     #[Route('/register', name: 'app_register', methods: ['POST'])]
     public function register(
         Request $request,
         EntityManagerInterface $em,
         UserPasswordHasherInterface $passwordHasher,
         ValidatorInterface $validator,
+        TokenGenerator $tokenGenerator,
+        AuthMailer $authMailer,
         #[Autowire(service: 'limiter.register_ip')] RateLimiterFactory $registerLimiterFactory,
     ): JsonResponse {
         $limit = $registerLimiterFactory->create($request->getClientIp())->consume();
@@ -59,13 +65,91 @@ final class AuthController extends AbstractController
             return $this->json(['error' => (string) $errors], Response::HTTP_BAD_REQUEST);
         }
 
+        $rawToken = $tokenGenerator->generate();
+        $user->setVerificationToken(
+            $tokenGenerator->hash($rawToken),
+            new \DateTimeImmutable(self::VERIFICATION_TOKEN_TTL),
+        );
+
         $em->persist($user);
         $em->flush();
 
-        // Registration only creates the account. The frontend follows up with
-        // a normal /api/login call (handled by the json_login authenticator)
-        // to obtain the auth cookie.
+        $authMailer->sendVerificationEmail($user, $rawToken);
+
+        // Registration only creates the account — it stays unusable until the
+        // user clicks the emailed activation link (AuthUserChecker enforces
+        // this at login time), so there's no automatic follow-up login here.
         return $this->json(['id' => $user->getId(), 'email' => $user->getEmail()], Response::HTTP_CREATED);
+    }
+
+    #[Route('/verify-email', name: 'app_verify_email', methods: ['POST'])]
+    public function verifyEmail(
+        Request $request,
+        EntityManagerInterface $em,
+        TokenGenerator $tokenGenerator,
+    ): JsonResponse {
+        $payload = json_decode($request->getContent(), true) ?? [];
+        $token = (string) ($payload['token'] ?? '');
+
+        if ('' === $token) {
+            return $this->json(['error' => 'token is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $em->getRepository(User::class)->findOneBy(['verificationTokenHash' => $tokenGenerator->hash($token)]);
+
+        if (null === $user
+            || null === $user->getVerificationTokenExpiresAt()
+            || $user->getVerificationTokenExpiresAt() < new \DateTimeImmutable()
+        ) {
+            return $this->json(['error' => 'invalid or expired token'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user->setIsVerified(true);
+        $user->setVerificationToken(null, null);
+        $em->flush();
+
+        return $this->json(['success' => true]);
+    }
+
+    #[Route('/resend-verification', name: 'app_resend_verification', methods: ['POST'])]
+    public function resendVerification(
+        Request $request,
+        EntityManagerInterface $em,
+        TokenGenerator $tokenGenerator,
+        AuthMailer $authMailer,
+        #[Autowire(service: 'limiter.resend_verification_ip')] RateLimiterFactory $resendVerificationLimiterFactory,
+    ): JsonResponse {
+        $limit = $resendVerificationLimiterFactory->create($request->getClientIp())->consume();
+        if (!$limit->isAccepted()) {
+            return $this->json(['error' => 'too many attempts, please try again later'], Response::HTTP_TOO_MANY_REQUESTS);
+        }
+
+        $payload = json_decode($request->getContent(), true) ?? [];
+        $email = trim((string) ($payload['email'] ?? ''));
+
+        // Always the same response, whether or not the account exists or is
+        // already verified — avoids leaking which emails are registered.
+        $response = $this->json(['message' => 'if an unverified account exists for this email, a new activation link has been sent']);
+
+        if ('' === $email) {
+            return $response;
+        }
+
+        $user = $em->getRepository(User::class)->findOneBy(['email' => $email]);
+        if (null === $user || $user->isVerified()) {
+            return $response;
+        }
+
+        $rawToken = $tokenGenerator->generate();
+        $user->setVerificationToken(
+            $tokenGenerator->hash($rawToken),
+            new \DateTimeImmutable(self::VERIFICATION_TOKEN_TTL),
+        );
+        $em->flush();
+
+        $authMailer->sendVerificationEmail($user, $rawToken);
+
+        return $response;
     }
 
     /**

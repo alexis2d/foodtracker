@@ -6,6 +6,14 @@
   padding: 24px;
 }
 
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
 .card {
   width: 100%;
   max-width: 480px;

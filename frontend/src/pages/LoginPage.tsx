@@ -60,6 +60,9 @@ export function LoginPage() {
           {submitting ? 'Connexion…' : 'Se connecter'}
         </button>
         <div className={styles.footer}>
+          <Link to="/forgot-password">Mot de passe oublié ?</Link>
+        </div>
+        <div className={styles.footer}>
           Pas encore de compte ? <Link to="/register">Créer un compte</Link>
         </div>
       </form>

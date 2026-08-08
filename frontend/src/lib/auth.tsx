@@ -42,13 +42,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [refreshMe],
   );
 
-  const register = useCallback(
-    async (email: string, password: string) => {
-      await api.post('/api/register', { email, password });
-      await login(email, password);
-    },
-    [login],
-  );
+  const register = useCallback(async (email: string, password: string) => {
+    // Account stays unusable until the emailed activation link is clicked,
+    // so there's no follow-up login here — see AuthController::register().
+    await api.post('/api/register', { email, password });
+  }, []);
 
   const logout = useCallback(async () => {
     await api.post('/api/logout');

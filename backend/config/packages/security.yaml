@@ -17,6 +17,7 @@ security:
             pattern: ^/api
             stateless: true
             provider: app_user_provider
+            user_checker: App\Security\AuthUserChecker
             json_login:
                 check_path: /api/login
                 username_path: email
@@ -36,6 +37,11 @@ security:
     access_control:
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/verify-email, roles: PUBLIC_ACCESS }
+        - { path: ^/api/resend-verification, roles: PUBLIC_ACCESS }
+        - { path: ^/api/forgot-password, roles: PUBLIC_ACCESS }
+        - { path: ^/api/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/api/confirm-password-change, roles: PUBLIC_ACCESS }
         # Guarded by its own DEPLOY_TOKEN check in the controller, not by
         # Symfony's user auth — this is a machine-to-machine deploy hook,
         # triggered by CI, that has no concept of a logged-in user.

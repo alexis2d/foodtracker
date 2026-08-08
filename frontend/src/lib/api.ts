@@ -23,7 +23,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     let message = response.statusText;
     try {
       const body = await response.json();
-      message = body.error ?? message;
+      message = body.error ?? body.message ?? message;
     } catch {
       // response body wasn't JSON, keep statusText
     }

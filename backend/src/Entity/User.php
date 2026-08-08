@@ -55,6 +55,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
+    #[ORM\Column]
+    private bool $isVerified = false;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $verificationTokenHash = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $verificationTokenExpiresAt = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $passwordResetTokenHash = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $passwordResetTokenExpiresAt = null;
+
+    /**
+     * New password hash held here until the user confirms the change via
+     * the emailed link — see PasswordController::changePassword().
+     */
+    #[ORM\Column(nullable: true)]
+    private ?string $pendingPasswordHash = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $passwordChangeTokenHash = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $passwordChangeTokenExpiresAt = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -203,6 +231,78 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setActivityLevel(?ActivityLevel $activityLevel): static
     {
         $this->activityLevel = $activityLevel;
+
+        return $this;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->isVerified;
+    }
+
+    public function setIsVerified(bool $isVerified): static
+    {
+        $this->isVerified = $isVerified;
+
+        return $this;
+    }
+
+    public function getVerificationTokenHash(): ?string
+    {
+        return $this->verificationTokenHash;
+    }
+
+    public function getVerificationTokenExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->verificationTokenExpiresAt;
+    }
+
+    public function setVerificationToken(?string $hash, ?\DateTimeImmutable $expiresAt): static
+    {
+        $this->verificationTokenHash = $hash;
+        $this->verificationTokenExpiresAt = $expiresAt;
+
+        return $this;
+    }
+
+    public function getPasswordResetTokenHash(): ?string
+    {
+        return $this->passwordResetTokenHash;
+    }
+
+    public function getPasswordResetTokenExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->passwordResetTokenExpiresAt;
+    }
+
+    public function setPasswordResetToken(?string $hash, ?\DateTimeImmutable $expiresAt): static
+    {
+        $this->passwordResetTokenHash = $hash;
+        $this->passwordResetTokenExpiresAt = $expiresAt;
+
+        return $this;
+    }
+
+    public function getPendingPasswordHash(): ?string
+    {
+        return $this->pendingPasswordHash;
+    }
+
+    public function getPasswordChangeTokenHash(): ?string
+    {
+        return $this->passwordChangeTokenHash;
+    }
+
+    public function getPasswordChangeTokenExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->passwordChangeTokenExpiresAt;
+    }
+
+    public function setPendingPasswordChange(?string $pendingPasswordHash, ?string $tokenHash, ?\DateTimeImmutable $expiresAt): static
+    {
+        $this->pendingPasswordHash = $pendingPasswordHash;
+        $this->passwordChangeTokenHash = $tokenHash;
+        $this->passwordChangeTokenExpiresAt = $expiresAt;
 
         return $this;
     }

@@ -8,3 +8,20 @@ framework:
             policy: 'sliding_window'
             limit: 5
             interval: '1 hour'
+        # Same shape as register_ip, guarding the other public endpoints that
+        # trigger an outbound email (resend-verification / forgot-password).
+        resend_verification_ip:
+            policy: 'sliding_window'
+            limit: 5
+            interval: '1 hour'
+        forgot_password_ip:
+            policy: 'sliding_window'
+            limit: 5
+            interval: '1 hour'
+        # Keyed by user email (authenticated endpoint) instead of IP — stops a
+        # hijacked session from spamming the account owner with confirmation
+        # emails regardless of which IP the requests come from.
+        password_change_user:
+            policy: 'sliding_window'
+            limit: 5
+            interval: '1 hour'

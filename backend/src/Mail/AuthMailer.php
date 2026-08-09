@@ -5,7 +5,7 @@ namespace App\Mail;
 use App\Entity\User;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Symfony\Component\Mailer\Exception\ExceptionInterface as MailerExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 
@@ -87,7 +87,10 @@ final class AuthMailer
 
         try {
             $this->mailer->send($email);
-        } catch (TransportExceptionInterface $e) {
+        } catch (MailerExceptionInterface $e) {
+            // Covers both transport failures (connection refused, auth
+            // rejected, ...) and a malformed/invalid MAILER_DSN — either way
+            // this must not turn into a 500 for the request that triggered it.
             $this->logger->error('Failed to send auth email: {message}', [
                 'message' => $e->getMessage(),
                 'userId' => $user->getId(),

@@ -9,6 +9,8 @@ import { ConfirmPasswordChangePage } from './pages/ConfirmPasswordChangePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { CustomFoodFormPage } from './pages/CustomFoodFormPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { MealsListPage } from './pages/MealsListPage';
+import { MealFormPage } from './pages/MealFormPage';
 
 export default function App() {
   return (
@@ -23,6 +25,9 @@ export default function App() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/foods/new" element={<CustomFoodFormPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/meals" element={<MealsListPage />} />
+        <Route path="/meals/new" element={<MealFormPage />} />
+        <Route path="/meals/:id/edit" element={<MealFormPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

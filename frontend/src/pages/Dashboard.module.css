@@ -129,8 +129,13 @@
   color: var(--danger);
 }
 
+.footerLinks {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
 .newFoodLink {
   display: inline-block;
-  margin-top: 8px;
   font-size: 0.9rem;
 }

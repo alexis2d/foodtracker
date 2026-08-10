@@ -98,9 +98,14 @@ export function DashboardPage() {
           </section>
         ))}
 
-      <Link className={styles.newFoodLink} to="/foods/new">
-        + Créer un aliment personnalisé
-      </Link>
+      <div className={styles.footerLinks}>
+        <Link className={styles.newFoodLink} to="/foods/new">
+          + Créer un aliment personnalisé
+        </Link>
+        <Link className={styles.newFoodLink} to="/meals">
+          Mes repas
+        </Link>
+      </div>
 
       {activeMeal && (
         <FoodSearchModal

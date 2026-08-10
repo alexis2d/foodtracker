@@ -36,8 +36,8 @@ class FoodRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('f')
             ->andWhere('LOWER(f.name) LIKE :query')
             ->setParameter('query', '%'.mb_strtolower($query).'%')
-            ->andWhere('f.source != :custom OR f.ownerUser = :owner')
-            ->setParameter('custom', FoodSource::Custom)
+            ->andWhere('f.source NOT IN (:privateSources) OR f.ownerUser = :owner')
+            ->setParameter('privateSources', [FoodSource::Custom, FoodSource::Meal])
             ->setParameter('owner', $owner)
             ->setMaxResults($limit);
 

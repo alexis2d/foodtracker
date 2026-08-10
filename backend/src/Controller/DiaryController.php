@@ -163,8 +163,8 @@ final class DiaryController extends AbstractController
             return null;
         }
 
-        // Custom foods are only loggable by their owner; off/seed foods are shared.
-        if (FoodSource::Custom === $food->getSource() && $food->getOwnerUser()?->getId() !== $user->getId()) {
+        // Custom foods and composed meals are only loggable by their owner; off/seed foods are shared.
+        if (in_array($food->getSource(), [FoodSource::Custom, FoodSource::Meal], true) && $food->getOwnerUser()?->getId() !== $user->getId()) {
             return null;
         }
 

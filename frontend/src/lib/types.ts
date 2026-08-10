@@ -1,4 +1,4 @@
-export type FoodSource = 'custom' | 'off' | 'seed';
+export type FoodSource = 'custom' | 'off' | 'seed' | 'meal';
 export type FoodUnit = 'g' | 'ml' | 'unit';
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
@@ -25,6 +25,36 @@ export interface Food {
   defaultUnit: FoodUnit;
   unitWeightGrams: number | null;
   editable: boolean;
+}
+
+export interface MealIngredientContribution {
+  grams: number;
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+export interface MealIngredient {
+  food: Food;
+  quantity: number;
+  unit: FoodUnit;
+  contribution: MealIngredientContribution;
+}
+
+export interface MealIngredientInput {
+  foodId: number;
+  quantity: number;
+  unit: FoodUnit;
+}
+
+export interface Meal {
+  id: number;
+  name: string;
+  food: Food;
+  ingredients: MealIngredient[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DiaryEntry {

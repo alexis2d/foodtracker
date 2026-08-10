@@ -2,14 +2,12 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useFoodSearch } from '../lib/useFoodSearch';
-import type { Food, MealType } from '../lib/types';
+import type { Food, FoodUnit } from '../lib/types';
 import styles from './FoodSearchModal.module.css';
 
 interface Props {
-  mealType: MealType;
-  date: string;
   onClose: () => void;
-  onAdded: () => void;
+  onAdd: (food: Food, quantity: number, unit: FoodUnit) => void;
 }
 
 const SOURCE_LABELS: Record<Food['source'], string> = {
@@ -19,7 +17,7 @@ const SOURCE_LABELS: Record<Food['source'], string> = {
   meal: 'mon repas',
 };
 
-export function FoodSearchModal({ mealType, date, onClose, onAdded }: Props) {
+export function IngredientPickerModal({ onClose, onAdd }: Props) {
   const { query, setQuery, results, loading } = useFoodSearch();
   const [selected, setSelected] = useState<Food | null>(null);
   const [quantity, setQuantity] = useState('100');
@@ -27,27 +25,20 @@ export function FoodSearchModal({ mealType, date, onClose, onAdded }: Props) {
   const addMutation = useMutation({
     mutationFn: async () => {
       if (!selected) return;
-      let foodId = selected.id;
-      if (foodId === null && selected.offId) {
-        const materialized = await api.post<Food>(`/api/foods/from-off/${selected.offId}`);
-        foodId = materialized.id;
+      let food = selected;
+      if (food.id === null && food.offId) {
+        food = await api.post<Food>(`/api/foods/from-off/${food.offId}`);
       }
-      await api.post('/api/diary', {
-        foodId,
-        quantity: Number(quantity),
-        unit: selected.defaultUnit,
-        mealType,
-        consumedAt: date,
-      });
+      onAdd(food, Number(quantity), food.defaultUnit);
     },
-    onSuccess: () => onAdded(),
+    onSuccess: () => onClose(),
   });
 
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h2>Ajouter un aliment</h2>
+          <h2>Ajouter un ingrédient</h2>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Fermer">
             ×
           </button>
@@ -102,7 +93,7 @@ export function FoodSearchModal({ mealType, date, onClose, onAdded }: Props) {
             <p className={styles.hint}>
               ≈ {Math.round((selected.kcalPer100 * Number(quantity || 0)) / 100)} kcal
             </p>
-            {addMutation.isError && <p className={styles.error}>Impossible d'ajouter cet aliment.</p>}
+            {addMutation.isError && <p className={styles.error}>Impossible d'ajouter cet ingrédient.</p>}
             <div className={styles.actions}>
               <button className={styles.secondary} onClick={() => setSelected(null)}>
                 Retour

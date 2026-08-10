@@ -125,6 +125,25 @@ jobs:
           local-dir: backend/vendor/
           server-dir: foodtracker-api/vendor/
 
+      # --classmap-authoritative (above) bakes every App\ class under src/ into
+      # vendor/composer/autoload_classmap.php and forbids the autoloader from
+      # falling back to a filesystem lookup for anything missing from that
+      # map. That map depends on what's in src/, not on composer.lock — so
+      # skipping this upload whenever a push only adds/renames PHP classes
+      # (the common case) leaves the server's classmap stale and every request
+      # touching a new class fatals with "Class ... not found". Unlike the
+      # rest of vendor/, this directory is a handful of small generated PHP
+      # files (not installed packages), so it's cheap enough to re-upload on
+      # every deploy regardless of the composer.lock diff above.
+      - name: Deploy vendor autoloader via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: backend/vendor/composer/
+          server-dir: foodtracker-api/vendor/composer/
+
       - name: Deploy app code via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:

@@ -147,24 +147,26 @@ export function MealFormPage() {
               {rows.map((row, index) => (
                 <li key={index} className={styles.row}>
                   <span className={styles.rowName}>{row.food.name}</span>
-                  <input
-                    className={styles.rowQty}
-                    type="number"
-                    min={0}
-                    step="any"
-                    value={row.quantity}
-                    onChange={(e) => updateQuantity(index, e.target.value)}
-                  />
-                  <span className={styles.rowUnit}>{row.unit}</span>
-                  <span className={styles.rowKcal}>{Math.round(rowContributions[index].kcal)} kcal</span>
-                  <button
-                    type="button"
-                    className={styles.removeBtn}
-                    onClick={() => removeRow(index)}
-                    aria-label="Retirer"
-                  >
-                    ×
-                  </button>
+                  <div className={styles.rowControls}>
+                    <input
+                      className={styles.rowQty}
+                      type="number"
+                      min={0}
+                      step="any"
+                      value={row.quantity}
+                      onChange={(e) => updateQuantity(index, e.target.value)}
+                    />
+                    <span className={styles.rowUnit}>{row.unit}</span>
+                    <span className={styles.rowKcal}>{Math.round(rowContributions[index].kcal)} kcal</span>
+                    <button
+                      type="button"
+                      className={styles.removeBtn}
+                      onClick={() => removeRow(index)}
+                      aria-label="Retirer"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>

@@ -8,8 +8,10 @@
 
 .kcalRow {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: baseline;
+  gap: 4px 12px;
   margin-bottom: 10px;
 }
 
@@ -54,7 +56,8 @@
 
 .macros {
   display: flex;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 6px 16px;
   margin-top: 12px;
   font-size: 0.85rem;
   color: var(--text-muted);

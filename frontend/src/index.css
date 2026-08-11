@@ -29,8 +29,14 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
+  min-width: 320px;
+  overflow-x: hidden;
   font-family: var(--sans);
   background: var(--bg);
   color: var(--text);

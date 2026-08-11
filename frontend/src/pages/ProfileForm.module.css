@@ -107,3 +107,17 @@
   font-size: 0.85rem;
   margin: 4px 0 16px;
 }
+
+@media (max-width: 480px) {
+  .wrapper {
+    padding: 16px;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

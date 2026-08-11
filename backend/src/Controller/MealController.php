@@ -12,6 +12,7 @@ use App\Repository\FoodRepository;
 use App\Repository\MealRepository;
 use App\Service\FoodPresenter;
 use App\Service\MealCalculator;
+use App\Service\MealSyncService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -27,6 +28,7 @@ final class MealController extends AbstractController
         private readonly MealRepository $mealRepository,
         private readonly FoodRepository $foodRepository,
         private readonly MealCalculator $calculator,
+        private readonly MealSyncService $mealSync,
         private readonly FoodPresenter $foodPresenter,
         private readonly EntityManagerInterface $em,
     ) {
@@ -55,20 +57,18 @@ final class MealController extends AbstractController
             return $this->json(['error' => $error], Response::HTTP_BAD_REQUEST);
         }
 
-        $aggregate = $this->calculator->computeAggregate($ingredients);
-
         $food = new Food();
         $food->setSource(FoodSource::Meal);
         $food->setOwnerUser($user);
         $food->setName($name);
         $food->setDefaultUnit(FoodUnit::Gram);
-        $this->applyPer100($food, $aggregate);
 
         $meal = new Meal();
         $meal->setName($name);
         $meal->setOwnerUser($user);
         $meal->setFood($food);
         $this->applyIngredients($meal, $ingredients);
+        $this->mealSync->recomputeMeal($meal);
 
         $this->em->persist($food);
         $this->em->persist($meal);
@@ -108,16 +108,16 @@ final class MealController extends AbstractController
             return $this->json(['error' => $error], Response::HTTP_BAD_REQUEST);
         }
 
-        $aggregate = $this->calculator->computeAggregate($ingredients);
-
         $meal->setName($name);
         $meal->getFood()->setName($name);
-        $this->applyPer100($meal->getFood(), $aggregate);
-        $meal->getFood()->touch();
 
         $meal->getIngredients()->clear();
         $this->applyIngredients($meal, $ingredients);
-        $meal->touch();
+        $this->mealSync->recomputeMeal($meal);
+
+        // This meal's own macros may have just changed, so anything using it
+        // as an ingredient (another meal) needs resyncing too.
+        $this->mealSync->cascadeFromFood($meal->getFood());
 
         $this->em->flush();
 
@@ -153,18 +153,6 @@ final class MealController extends AbstractController
             $meal->addIngredient($mealIngredient);
             $this->em->persist($mealIngredient);
         }
-    }
-
-    /**
-     * @param array{kcal: float, protein: float, carbs: float, fat: float, totalGrams: float} $aggregate
-     */
-    private function applyPer100(Food $food, array $aggregate): void
-    {
-        $per100 = $this->calculator->per100FromAggregate($aggregate);
-        $food->setKcalPer100($per100['kcalPer100']);
-        $food->setProteinPer100($per100['proteinPer100']);
-        $food->setCarbsPer100($per100['carbsPer100']);
-        $food->setFatPer100($per100['fatPer100']);
     }
 
     /**

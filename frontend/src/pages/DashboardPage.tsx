@@ -99,8 +99,8 @@ export function DashboardPage() {
         ))}
 
       <div className={styles.footerLinks}>
-        <Link className={styles.newFoodLink} to="/foods/new">
-          + Créer un aliment personnalisé
+        <Link className={styles.newFoodLink} to="/foods">
+          Mes aliments
         </Link>
         <Link className={styles.newFoodLink} to="/meals">
           Mes repas

@@ -8,6 +8,7 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { ConfirmPasswordChangePage } from './pages/ConfirmPasswordChangePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { CustomFoodFormPage } from './pages/CustomFoodFormPage';
+import { CustomFoodsListPage } from './pages/CustomFoodsListPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { MealsListPage } from './pages/MealsListPage';
 import { MealFormPage } from './pages/MealFormPage';
@@ -23,7 +24,9 @@ export default function App() {
       <Route path="/confirm-password-change" element={<ConfirmPasswordChangePage />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/foods" element={<CustomFoodsListPage />} />
         <Route path="/foods/new" element={<CustomFoodFormPage />} />
+        <Route path="/foods/:id/edit" element={<CustomFoodFormPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/meals" element={<MealsListPage />} />
         <Route path="/meals/new" element={<MealFormPage />} />

@@ -1,11 +1,21 @@
-import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, type FormEvent } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { api, ApiError } from '../lib/api';
-import type { FoodUnit } from '../lib/types';
+import type { Food, FoodUnit } from '../lib/types';
 import styles from './CustomFoodForm.module.css';
 
 export function CustomFoodFormPage() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditing = id !== undefined;
+
+  const foodQuery = useQuery({
+    queryKey: ['custom-food', id],
+    queryFn: () => api.get<Food>(`/api/custom-foods/${id}`),
+    enabled: isEditing,
+  });
+
   const [name, setName] = useState('');
   const [defaultUnit, setDefaultUnit] = useState<FoodUnit>('g');
   const [unitWeightGrams, setUnitWeightGrams] = useState('');
@@ -17,12 +27,26 @@ export function CustomFoodFormPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (foodQuery.data) {
+      const food = foodQuery.data;
+      setName(food.name);
+      setDefaultUnit(food.defaultUnit);
+      setUnitWeightGrams(food.unitWeightGrams !== null ? String(food.unitWeightGrams) : '');
+      setKcal(String(food.kcalPer100));
+      setProtein(String(food.proteinPer100));
+      setCarbs(String(food.carbsPer100));
+      setFat(String(food.fatPer100));
+      setFiber(food.fiberPer100 !== null ? String(food.fiberPer100) : '');
+    }
+  }, [foodQuery.data]);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      await api.post('/api/custom-foods', {
+      const payload = {
         name,
         defaultUnit,
         unitWeightGrams: defaultUnit === 'unit' ? Number(unitWeightGrams) : null,
@@ -31,8 +55,13 @@ export function CustomFoodFormPage() {
         carbsPer100: Number(carbs),
         fatPer100: Number(fat),
         fiberPer100: fiber === '' ? null : Number(fiber),
-      });
-      navigate('/');
+      };
+      if (isEditing) {
+        await api.put(`/api/custom-foods/${id}`, payload);
+      } else {
+        await api.post('/api/custom-foods', payload);
+      }
+      navigate('/foods');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Une erreur est survenue');
     } finally {
@@ -43,7 +72,7 @@ export function CustomFoodFormPage() {
   return (
     <div className={styles.wrapper}>
       <form className={styles.card} onSubmit={handleSubmit}>
-        <h1 className={styles.title}>Nouvel aliment personnalisé</h1>
+        <h1 className={styles.title}>{isEditing ? "Modifier l'aliment" : 'Nouvel aliment personnalisé'}</h1>
         {error && <div className={styles.error}>{error}</div>}
 
         <div className={styles.field}>
@@ -131,11 +160,11 @@ export function CustomFoodFormPage() {
         </div>
 
         <div className={styles.actions}>
-          <button type="button" className={styles.secondary} onClick={() => navigate('/')}>
+          <button type="button" className={styles.secondary} onClick={() => navigate('/foods')}>
             Annuler
           </button>
           <button type="submit" className={styles.primary} disabled={submitting}>
-            {submitting ? 'Création…' : 'Créer'}
+            {submitting ? 'Enregistrement…' : isEditing ? 'Enregistrer' : 'Créer'}
           </button>
         </div>
       </form>

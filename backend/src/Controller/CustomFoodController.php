@@ -7,7 +7,9 @@ use App\Entity\Enum\FoodUnit;
 use App\Entity\Food;
 use App\Entity\User;
 use App\Repository\FoodRepository;
+use App\Repository\MealRepository;
 use App\Service\FoodPresenter;
+use App\Service\MealSyncService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,6 +23,8 @@ final class CustomFoodController extends AbstractController
 {
     public function __construct(
         private readonly FoodRepository $foodRepository,
+        private readonly MealRepository $mealRepository,
+        private readonly MealSyncService $mealSync,
         private readonly FoodPresenter $presenter,
         private readonly EntityManagerInterface $em,
     ) {
@@ -77,6 +81,9 @@ final class CustomFoodController extends AbstractController
         }
 
         $food->touch();
+        // This food's macros may have just changed, so any meal built from
+        // it (directly or via another meal) has stale totals until resynced.
+        $this->mealSync->cascadeFromFood($food);
         $this->em->flush();
 
         return $this->json($this->presenter->present($food));
@@ -88,6 +95,10 @@ final class CustomFoodController extends AbstractController
         $food = $this->findOwned($id, $user);
         if (null === $food) {
             return $this->json(['error' => 'not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ([] !== $this->mealRepository->findUsingFood($food)) {
+            return $this->json(['error' => 'cannot delete: this food is used as an ingredient in one or more meals'], Response::HTTP_CONFLICT);
         }
 
         $this->em->remove($food);
